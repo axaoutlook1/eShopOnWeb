@@ -1,0 +1,38 @@
+name: Restrict Branch Changes
+
+on:
+  pull_request:
+    branches:
+      - main     # PR target branch
+  push:
+    branches:
+      - main     # Direct push target branch
+
+jobs:
+  check-pr-branch:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR source branch
+        run: |
+          echo "Target branch: $GITHUB_BASE_REF"
+          echo "Source branch: $GITHUB_HEAD_REF"
+          
+          # Allowed source branches for PRs
+          ALLOWED_BRANCHES=("develop")
+
+          if [[ ! " ${ALLOWED_BRANCHES[@]} " =~ " ${GITHUB_HEAD_REF} " ]]; then
+            echo "❌ Pull requests to $GITHUB_BASE_REF must come from: ${ALLOWED_BRANCHES[*]}"
+            exit 1
+          fi
+          
+          echo "✅ Source branch is allowed"
+
+  block-direct-push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block direct pushes
+        run: |
+          echo "❌ Direct pushes to $GITHUB_REF are not allowed."
+          exit 1
